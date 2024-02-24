@@ -2,7 +2,7 @@
 
 from typing import Any, Dict, List
 
-from fastapi import APIRouter, BackgroundTasks, FastAPI, Query, Request
+from fastapi import APIRouter, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -19,7 +19,7 @@ from app.core.utility.timing_middleware import TimingMiddleware
 log = get_logger()
 
 
-def get_app() -> FastAPI:
+def get_app():
     """Get application handle and add any middleware.
 
     Returns:
