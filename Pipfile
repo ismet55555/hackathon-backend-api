@@ -1,0 +1,41 @@
+# -*- mode: toml -*-
+# vim: set filetype=toml
+# atom: set grammar=toml
+
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[requires]
+python_version = "3"
+
+[packages]
+fastapi = "*"
+gunicorn = "*"
+jinja2 = "*"
+pydantic = "*"
+pydantic-settings = "*"
+python-dotenv = "*"
+slowapi = "*"
+uvicorn = "*"
+
+[dev-packages]
+black ="*"
+isort = "*"
+mypy = "*"
+myst_parser = "*"
+pre-commit = "*"
+pylint = "*"
+wheel = "*"
+
+[pipenv]
+allow_prereleases = false
+
+[scripts]
+develop = "./start-dev.sh"
+prod = "./start.sh"
+
+docker-build = "docker build --tag app ."
+docker-develop = "docker run --env-file .env --publish 9500:9500 --volume .:/app app /start-reload.sh"
+docker-prod = "docker run --env-file .env --publish 9500:9500 app"

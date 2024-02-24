@@ -1,0 +1,19 @@
+# -*- mode: yaml -*-
+# vim: set filetype=yaml
+# atom: set grammar=yaml
+---
+version: "3.8"
+
+services:
+  app:
+    build: .
+    container_name: fastapi-template
+    env_file:
+      - .env
+    ports:
+      - "9500:9500"
+    restart: unless-stopped
+
+    # privileged: true
+    # devices:
+    #   - /dev/ttyS0:/dev/ttyS0

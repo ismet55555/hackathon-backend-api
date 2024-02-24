@@ -1,0 +1,16 @@
+# -*- mode: yaml -*-
+# vim: set filetype=yaml
+# atom: set grammar=yaml
+---
+
+# More configurations: https://yamllint.readthedocs.io/en/stable/configuration.html
+
+rules:
+  line-length:
+    level: error
+    max: 120
+
+yaml-files:
+  - '*.yaml'
+  - '*.yml'
+  - '.yamllint'

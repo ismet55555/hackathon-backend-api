@@ -1,0 +1,70 @@
+# -*- mode: yaml -*-
+# vim: set filetype=yaml
+# atom: set grammar=yaml
+---
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.0.1
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-docstring-first
+      - id: detect-private-key
+      - id: requirements-txt-fixer
+      - id: check-ast
+      - id: check-json
+      - id: check-toml
+      - id: check-yaml
+        files: (.yaml|.yml)
+      - id: check-added-large-files
+        args: [--maxkb=500]
+      - id: no-commit-to-branch
+        args: [--branch, main]
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.16.1
+    hooks:
+      - id: gitleaks
+
+  - repo: https://github.com/adrienverge/yamllint.git
+    rev: v1.29.0
+    hooks:
+      - id: yamllint
+        args: [--strict, -c=.yamllint]
+
+  - repo: https://github.com/psf/black
+    rev: 23.1.0
+    hooks:
+      - id: black
+        language_version: python3.10
+
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+
+  # - repo: https://github.com/PyCQA/pylint
+  #   rev: pylint-2.13.3
+  #   hooks:
+  #     - id: pylint
+  #       name: pylint
+  #       entry: pylint
+  #       language: system
+  #       types: [python]
+  #       args: [--rcfile=.pylintrc]
+
+  - repo: local
+    hooks:
+      - id: pylint
+        name: pylint
+        entry: pylint
+        language: system
+        types: [python]
+        args:
+          [
+            "-rn", # Only display messages
+            "-sn", # Don't display the score
+            "--rcfile=.pylintrc", # Link to your config file
+            "--load-plugins=pylint.extensions.docparams", # Load an extension
+            "--output-format=colorized", # Load an extension
+          ]
