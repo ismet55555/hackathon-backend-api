@@ -10,95 +10,58 @@ from requests_oauthlib import OAuth1
 
 from app.core.utility.logger_setup import get_logger
 
+import urllib
+import tweepy
+
 log = get_logger()
 
 
 class Twitter:
     """Class handling twitter stuff."""
 
-    def __init__(self) -> None:
+    api_key = None
+    api_secret = None
+    access_token = None
+    access_token_secret = None
+
+    def __init__(self, api_key, api_secret, access_token, access_token_secret) -> None:
         """Run Constructor."""
-        pass
-        # self.bearer_token = self._get_twitter_bearer_token()
-        # if not self.bearer_token:
-        #     log.fatal("Failed to obtain Twitter bearer token from environment")
-        #     raise SystemExit
+        self.api_key = api_key
+        self.api_secret = api_secret
+        self.access_token = access_token
+        self.access_token_secret = access_token_secret
+        return
 
-    # def _get_twitter_bearer_token(self) -> str:
-    #     """Fetch Twitter bearer token."""
-    #     log.info("Getting Twitter bearer token ...")
-    #     key = os.getenv("TWITTER_API_KEY")
-    #     secret = os.getenv("TWITTER_API_KEY_SECRET")
-    #     bearer_token_credentials = base64.b64encode(f"{key}:{secret}".encode("utf-8")).decode("utf-8")
-    #     headers = {
-    #         "Authorization": f"Basic {bearer_token_credentials}",
-    #         "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
-    #     }
-    #     response = requests.post(
-    #         "https://api.twitter.com/oauth2/token",
-    #         headers=headers,
-    #         data={"grant_type": "client_credentials"},
-    #     )
-    #     if response.status_code != 200:
-    #         raise HTTPException(status_code=500, detail="Failed to obtain bearer token")
-    #
-    #     return response.json()["access_token"]
+    def post(self, content, imageUrl):
+        client_v1 = self.get_twitter_conn_v1(self.api_key, self.api_secret, self.access_token, self.access_token_secret)
+        client_v2 = self.get_twitter_conn_v2(self.api_key, self.api_secret, self.access_token, self.access_token_secret)
 
-    def post_tweet(self, tweet_text: str, tweet_image_url: str) -> Tuple[bool, str]:
-        """Post a tweet."""
-        log.info("Posting tweet ...")
-        response = requests.get(tweet_image_url, timeout=10)
-        if response.status_code != 200:
-            log.error(f"Failed to download image: {response.text}")
-            raise HTTPException(status_code=400, detail="Could not download this image")
+        urllib.request.urlretrieve(imageUrl, "tempImage.png")
 
-        #   Convert the image to the format required by the APIv1
-        files = {"media": response.content}
-        media_upload_url = "https://upload.twitter.com/1.1/media/upload.json"
+        media = client_v1.media_upload(filename="tempImage.png")
+        media_id = media.media_id
 
-        oauth = OAuth1(
-            os.getenv("TWITTER_API_KEY"),
-            os.getenv("TWITTER_API_KEY_SECRET"),
-            os.getenv("TWITTER_ACCESS_TOKEN"),
-            os.getenv("TWITTER_ACCESS_TOKEN_SECRET"),
+        client_v2.create_tweet(text=content, media_ids=[media_id])
+
+    def get_twitter_conn_v1(self, api_key, api_secret, access_token, access_token_secret) -> tweepy.API:
+        """Get twitter conn 1.1"""
+
+        auth = tweepy.OAuth1UserHandler(api_key, api_secret)
+        auth.set_access_token(
+            access_token,
+            access_token_secret,
+        )
+        return tweepy.API(auth)
+
+    def get_twitter_conn_v2(self, api_key, api_secret, access_token, access_token_secret) -> tweepy.Client:
+        """Get twitter conn 2.0"""
+
+        client = tweepy.Client(
+            consumer_key=api_key,
+            consumer_secret=api_secret,
+            access_token=access_token,
+            access_token_secret=access_token_secret,
         )
 
-        response = requests.post(media_upload_url, files=files, auth=oauth, timeout=10)
+        return client
 
-        # Before attempting to decode the response, check if it was successful
-        if response.status_code != 200:
-            # Log or print the error response for debugging
-            error_message = f"Failed to upload media: Status code: {response.status_code}, Response: {response.text}"
-            log.error(error_message)
-            raise HTTPException(status_code=500, detail=error_message)
-
-        # Attempt to decode the JSON response
-        try:
-            media_id = response.json()["media_id_string"]
-            if not media_id:
-                raise HTTPException(status_code=500, detail="Media ID not found in the response")
-        except ValueError as error:
-            raise HTTPException(status_code=500, detail=f"JSON decode error: {error}") from error
-
-        #   Step 3: Post the tweet with the image using Twitter API v2
-        tweet_url = "https://api.twitter.com/2/tweets"
-        headers = {
-            "Authorization": f"Bearer {self._get_twitter_bearer_token()}",
-            "Content-Type": "application/json",
-        }
-        payload = {
-            "text": tweet_text,
-            "media": {
-                "media_ids": [
-                    media_id
-                ]  # Replace media_id with the actual media ID from the upload response #????????????
-            },
-        }
-        response = requests.post(tweet_url, json=payload, headers=headers)
-
-        if response.status_code != 201:
-            raise HTTPException(
-                status_code=response.status_code, detail=f"Failed to post tweet: {response.text}"
-            )
-
-        return True, response.json()["data"]["id"]

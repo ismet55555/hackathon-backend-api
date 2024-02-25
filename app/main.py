@@ -28,55 +28,56 @@ from app.core.utility.utils import read_json_file
 
 import urllib.request
 
-class ai_bot:
 
-    # ================= ATTRIBUTES ===============
+# class ai_bot:
 
-    api_key = None
-    mood = None
-    tone = None
-    description = None
-    textPrompt = None
-    imagePrompt = (None,)
+#     # ================= ATTRIBUTES ===============
 
-    # ================= CONSTRUCTORS ===============
+#     api_key = None
+#     mood = None
+#     tone = None
+#     description = None
+#     textPrompt = None
+#     imagePrompt = (None,)
 
-    def __init__(self, api_key, mood, tone, description):
-        self.api_key = api_key
-        self.mood = mood
-        self.tone = tone
-        self.description = description
-        self.textPrompt = f"""Create an Instagram post given the following information. Use the description as a general guideline about the topic. The post should have the goal of becoming as viral as possible. Aim to avoid extreme views and or activism.
-    Mood: {mood} Tone: {tone} Description: {description}"""
-        self.imagePrompt = f"""Create an image for an Instagram post given the following information. Use the description as a general guideline about the topic. The post should have the goal of becoming as viral as possible. Aim to avoid extreme views and or activism.
-    Mood: {mood} Tone: {tone} Description: {description}"""
+#     # ================= CONSTRUCTORS ===============
 
-    # ================= METHODS ===============
+#     def __init__(self, api_key, mood, tone, description):
+#         self.api_key = api_key
+#         self.mood = mood
+#         self.tone = tone
+#         self.description = description
+#         self.textPrompt = f"""Create an Instagram post given the following information. Use the description as a general guideline about the topic. The post should have the goal of becoming as viral as possible. Aim to avoid extreme views and or activism.
+#     Mood: {mood} Tone: {tone} Description: {description}"""
+#         self.imagePrompt = f"""Create an image for an Instagram post given the following information. Use the description as a general guideline about the topic. The post should have the goal of becoming as viral as possible. Aim to avoid extreme views and or activism.
+#     Mood: {mood} Tone: {tone} Description: {description}"""
 
-    # generate post content
-    async def generate_post_content(self):
-        client = self.get_connected_client()
-        result = await client.chat.completions.create(
-            model="gpt-3.5-turbo", messages=[{"role": "user", "content": self.textPrompt}]
-        )
-        return result.choices[0].message.content
+#     # ================= METHODS ===============
 
-    # generate post image
-    async def generate_post_image(self):
-        client = self.get_connected_client()
-        response = await client.images.generate(
-            model="dall-e-2",
-            prompt="a white siamese cat",
-            size="256x256",
-            quality="standard",
-            n=1,
-        )
-        return response.data[0].url
+#     # generate post content
+#     async def generate_post_content(self):
+#         client = self.get_connected_client()
+#         result = await client.chat.completions.create(
+#             model="gpt-3.5-turbo", messages=[{"role": "user", "content": self.textPrompt}]
+#         )
+#         return result.choices[0].message.content
 
-    # ================= HELPER METHODS ===============
+#     # generate post image
+#     async def generate_post_image(self):
+#         client = self.get_connected_client()
+#         response = await client.images.generate(
+#             model="dall-e-2",
+#             prompt="a white siamese cat",
+#             size="256x256",
+#             quality="standard",
+#             n=1,
+#         )
+#         return response.data[0].url
 
-    def get_connected_client(self):
-        return AsyncOpenAI(api_key=self.api_key)
+#     # ================= HELPER METHODS ===============
+
+#     def get_connected_client(self):
+#         return AsyncOpenAI(api_key=self.api_key)
 
 
 
@@ -133,7 +134,6 @@ def get_app():
 
 app = get_app()
 database = Database("app/core/database/database.json")
-twitter = Twitter()
 templates = Jinja2Templates(directory="app/front-end/templates")
 
 
@@ -251,7 +251,7 @@ async def send_post_request(id: str, mood: str, tone: str, description: str) -> 
     }
     database.set_post_request_info(business_id=id, post_request_info=info)
 
-    pprint(database.get_business_info(business_id=id))
+    #pprint(database.get_business_info(business_id=id))
 
     # userInput = json.loads(jsonInput)
 
@@ -306,45 +306,22 @@ def post_to_instagram() -> bool:
 def post_to_twitter(id: str) -> bool:
     """Post to Twitter/x."""
 
-    def get_twitter_conn_v1(api_key, api_secret, access_token, access_token_secret) -> tweepy.API:
-        """Get twitter conn 1.1"""
-
-        auth = tweepy.OAuth1UserHandler(api_key, api_secret)
-        auth.set_access_token(
-            access_token,
-            access_token_secret,
-        )
-        return tweepy.API(auth)
-
-    def get_twitter_conn_v2(api_key, api_secret, access_token, access_token_secret) -> tweepy.Client:
-        """Get twitter conn 2.0"""
-
-        client = tweepy.Client(
-            consumer_key=api_key,
-            consumer_secret=api_secret,
-            access_token=access_token,
-            access_token_secret=access_token_secret,
-        )
-
-        return client
-
     api_key = os.getenv("TWITTER_API_KEY")
     api_secret = os.getenv("TWITTER_API_SECRET")
     access_token = os.getenv("TWITTER_ACCESS_TOKEN")
     access_token_secret = os.getenv("TWITTER_ACCESS_TOKEN_SECRET")
 
-    client_v1 = get_twitter_conn_v1(api_key, api_secret, access_token, access_token_secret)
-    client_v2 = get_twitter_conn_v2(api_key, api_secret, access_token, access_token_secret)
-
     # get image and content from database
     ai_response = database.get_business_info(business_id=id)["post_request"]["ai_response"]
 
-    urllib.request.urlretrieve(ai_response["picture_url"], "tempImage.png")
-
-    media = client_v1.media_upload(filename="tempImage.png")
-    media_id = media.media_id
-
-    client_v2.create_tweet(text=ai_response["caption_text"], media_ids=[media_id])
+    twitterClient = Twitter(
+        api_key,
+        api_secret,
+        access_token,
+        access_token_secret
+    )
+    
+    twitterClient.post(content=ai_response["caption_text"],imageUrl=ai_response["picture_url"])
 
     return True
 
