@@ -102,14 +102,14 @@ def app_health_check() -> Dict[str, str]:
 social_api_router = APIRouter(tags=["social"])
 
 
-@app.post("/post_to_twitter")
+@social_api_router.post("/post_to_twitter")
 def post_to_twitter(tweet_text: str, tweet_image_url: str) -> dict:
     """Post a tweet."""
     success, tweet_id = twitter.post_tweet(tweet_text, tweet_image_url)
     return {"success": success, "tweet_id": tweet_id}
 
 
-@app.post("/post_to_instagram")
+@social_api_router.post("/post_to_instagram")
 def post_to_instagram(instagram_text: str, instagram_image_url: str) -> dict:
     """Post a tweet."""
     # TODO
@@ -126,7 +126,7 @@ app.include_router(social_api_router, prefix="/social")
 business_api_router = APIRouter(tags=["business"])
 
 
-@business_api_router.get("/create")
+@business_api_router.post("/create")
 def create_a_business(
     name: str, description: str, specifics: str, email: str, password: str
 ) -> dict:
