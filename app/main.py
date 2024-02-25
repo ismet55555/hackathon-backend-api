@@ -202,6 +202,7 @@ def check_post_status() -> bool:
 def get_post_data(id: str) -> dict:
     """Get the data returened from OpenAPI if ready."""
     business_info = database.get_business_info(id)
+    print("businessInfo", business_info["post_request"]["ai_response"])
     return business_info["post_request"]["ai_response"]
 
 
