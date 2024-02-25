@@ -1,7 +1,6 @@
 """Manage database."""
 
 import os
-
 from pprint import pformat, pprint
 from typing import List, Tuple, Union
 
