@@ -18,6 +18,7 @@ from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
 
 from app.core.fastapi_config import Settings
+from app.core.logs.logs import Logs
 from app.core.utility.logger_setup import get_logger
 from app.core.utility.timing_middleware import TimingMiddleware
 
@@ -110,12 +111,12 @@ def app_health_check() -> Dict[str, str]:
     """Application health check status."""
     return {"status": "healthy"}
 
-# @app.get("/test_stuff_1")
-# def test_stuff_2() -> dict:
 
 #################################################################################
 #                                 Image Generator
 #################################################################################
+# Assuming the rest of your initial setup remains the same
+
 class ImagePrompt(BaseModel):
     prompt: str
     n: int = 1  # Number of images to generate
@@ -152,7 +153,6 @@ async def generate_image(request: ImagePrompt):
     
     # Return the response data
     return response.json()
-<<<<<<< HEAD
 #################################################################################
 #                                 Network
 #################################################################################
@@ -182,10 +182,9 @@ def get_my_test_info() -> Dict[str, Any]:
 
 app.include_router(network_api_router, prefix="/network")
 
-=======
 
 app.include_router(image_gen_api_router, prefix="/openai_api")
->>>>>>> f13d6ea1320af0bcfc4ecb398bd392d5152087b5
+
 
 
 #################################################################################
