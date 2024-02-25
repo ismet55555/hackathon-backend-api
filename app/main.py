@@ -16,8 +16,8 @@ from slowapi.util import get_remote_address
 
 from app.core.ai_bot.ai_bot import AiBot
 from app.core.database.database import Database
-from app.core.social.twitter import Twitter
 from app.core.fastapi_config import Settings
+from app.core.social.twitter import Twitter
 from app.core.utility.logger_setup import get_logger
 from app.core.utility.timing_middleware import TimingMiddleware
 
@@ -96,30 +96,26 @@ def app_health_check() -> Dict[str, str]:
     return {"status": "healthy"}
 
 
-
 #################################################################################
 #                           Social Posts
 #################################################################################
 social_api_router = APIRouter(tags=["social"])
 
+
 @app.post("/post_to_twitter")
 def post_to_twitter(tweet_text: str, tweet_image_url: str) -> dict:
     """Post a tweet."""
     success, tweet_id = twitter.post_tweet(tweet_text, tweet_image_url)
-    return {
-        "success": success,
-        "tweet_id": tweet_id
-    }
+    return {"success": success, "tweet_id": tweet_id}
+
 
 @app.post("/post_to_instagram")
 def post_to_instagram(instagram_text: str, instagram_image_url: str) -> dict:
     """Post a tweet."""
     # TODO
     success, post_id = False, "34353453"
-    return {
-        "success": success,
-        "tweet_id": post_id
-    }
+    return {"success": success, "tweet_id": post_id}
+
 
 app.include_router(social_api_router, prefix="/social")
 

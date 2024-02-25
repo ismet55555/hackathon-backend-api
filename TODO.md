@@ -15,7 +15,7 @@ customer info
     - info about post
         - sbumit goes into backend
 
-    - 
+    -
 
 ## Backend
 

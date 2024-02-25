@@ -24,4 +24,3 @@ uvicorn --reload --port 9500 --log-level debug app.main:app
 
 # CTRL-c to quit
 ```
-
