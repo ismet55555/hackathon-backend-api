@@ -1,5 +1,7 @@
 """Manage database."""
 
+import os
+
 from pprint import pformat, pprint
 from typing import List, Tuple, Union
 
@@ -19,6 +21,11 @@ class Database:
     def __init__(self, filepath: str = "database.json") -> None:
         """TODO."""
         self.db_filepath = filepath
+
+        # If database file does not exist, create it, with {} as content
+        if not os.path.isfile(self.db_filepath):
+            log.warning(f"Database file does not exist. Creating: {self.db_filepath}")
+            overwrite_json_file(self.db_filepath, {})
 
         self.db = read_json_file(self.db_filepath)
         log.debug(f"Database file loaded: {pformat(self.db)}")
