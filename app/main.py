@@ -5,7 +5,6 @@ import urllib.request
 from pprint import pprint
 from typing import Any, Dict
 
-import requests
 import tweepy
 from dotenv import load_dotenv
 from fastapi import APIRouter, FastAPI, HTTPException, Request
