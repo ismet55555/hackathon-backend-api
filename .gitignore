@@ -165,7 +165,7 @@ cython_debug/
 #SECRETS
 appsettings.env
 
-./app/core/database/database.json
+./app/core/database/*.json
 
 **/*.jpeg
 **/*.jpg
