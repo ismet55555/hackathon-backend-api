@@ -11,16 +11,17 @@ verify_ssl = true
 python_version = "3.11"
 
 [packages]
+exceptiongroup = "*"
 fastapi = "*"
 gunicorn = "*"
 jinja2 = "*"
+openai = "*"
 pydantic = "*"
 pydantic-settings = "*"
 python-dotenv = "*"
 slowapi = "*"
+tweepy = "*"
 uvicorn = "*"
-exceptiongroup = "*"
-openai = "*"
 
 [dev-packages]
 black ="*"
