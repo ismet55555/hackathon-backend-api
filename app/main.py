@@ -24,6 +24,8 @@ from app.core.utility.logger_setup import get_logger
 from app.core.utility.timing_middleware import TimingMiddleware
 from app.core.utility.utils import read_json_file
 
+import urllib.request
+
 log = get_logger()
 load_dotenv()
 
@@ -77,7 +79,6 @@ def get_app():
 
 app = get_app()
 database = Database("app/core/database/database.json")
-twitter = Twitter()
 templates = Jinja2Templates(directory="app/front-end/templates")
 
 
@@ -194,7 +195,7 @@ async def send_post_request(id: str, mood: str, tone: str, description: str) -> 
         "in_progress": True,
     }
     database.set_post_request_info(business_id=id, post_request_info=info)
-    # pprint(database.get_business_info(business_id=id))
+
 
     our_ai_bot = AiBot(
         api_key=OPENAI_API_KEY,
@@ -243,47 +244,22 @@ def post_to_instagram() -> bool:
 def post_to_twitter(id: str) -> bool:
     """Post to Twitter/x."""
 
-    def get_twitter_conn_v1(api_key, api_secret, access_token, access_token_secret) -> tweepy.API:
-        """Get twitter conn 1.1"""
-
-        auth = tweepy.OAuth1UserHandler(api_key, api_secret)
-        auth.set_access_token(
-            access_token,
-            access_token_secret,
-        )
-        return tweepy.API(auth)
-
-    def get_twitter_conn_v2(
-        api_key, api_secret, access_token, access_token_secret
-    ) -> tweepy.Client:
-        """Get twitter conn 2.0"""
-
-        client = tweepy.Client(
-            consumer_key=api_key,
-            consumer_secret=api_secret,
-            access_token=access_token,
-            access_token_secret=access_token_secret,
-        )
-
-        return client
-
     api_key = os.getenv("TWITTER_API_KEY")
     api_secret = os.getenv("TWITTER_API_SECRET")
     access_token = os.getenv("TWITTER_ACCESS_TOKEN")
     access_token_secret = os.getenv("TWITTER_ACCESS_TOKEN_SECRET")
 
-    client_v1 = get_twitter_conn_v1(api_key, api_secret, access_token, access_token_secret)
-    client_v2 = get_twitter_conn_v2(api_key, api_secret, access_token, access_token_secret)
-
     # get image and content from database
     ai_response = database.get_business_info(business_id=id)["post_request"]["ai_response"]
 
-    urllib.request.urlretrieve(ai_response["picture_url"], "tempImage.png")
-
-    media = client_v1.media_upload(filename="tempImage.png")
-    media_id = media.media_id
-
-    client_v2.create_tweet(text=ai_response["caption_text"], media_ids=[media_id])
+    twitterClient = Twitter(
+        api_key,
+        api_secret,
+        access_token,
+        access_token_secret
+    )
+    
+    twitterClient.post(content=ai_response["caption_text"],imageUrl=ai_response["picture_url"])
 
     return True
 
