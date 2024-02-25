@@ -18,7 +18,6 @@ from app.core.fastapi_config import Settings
 from app.core.logs.logs import Logs
 from app.core.utility.logger_setup import get_logger
 from app.core.utility.timing_middleware import TimingMiddleware
-from data_models import InstagramInput
 
 import requests
 import os
@@ -149,15 +148,12 @@ async def generate_image(request: ImagePrompt):
     
     # Return the response data
     return response.json()
-app.include_image(ImagePrompt, prefix="OpenAI API")
 #################################################################################
 #                                 Network
 #################################################################################
-<<<<<<< HEAD
+
 network_api_router = APIRouter(tags=["Testing"])
-=======
-network_api_router = APIRouter(tags=["blah"])
->>>>>>> c2d9df268c13db6f9285e3c553112de4a1c9eae3
+
 
 
 @network_api_router.get("/TODO")
@@ -171,26 +167,16 @@ def get_general_network_state() -> Dict[str, Any]:
     """TODO."""
     return {"todo": "todo"}
 
-<<<<<<< HEAD
+
 @network_api_router.get("/MYTEST")
 def get_my_test_info() -> Dict[str, Any]:
     #"""TODO."""
     return {"todo": "todo"}
 
-@network_api_router.post("/instagram")
-def get_my_test_info(jsonInput) -> Dict[str, Any]:
-    
-    # parse info into object
-    instagramInput = InstagramInput(jsonInput)
 
-    # object has custinput, prompt for image
-    # pass info to insta
-    return {"todo": "todo"}
 
 app.include_router(network_api_router, prefix="/network")
-=======
-app.include_router(network_api_router, prefix="/blah")
->>>>>>> c2d9df268c13db6f9285e3c553112de4a1c9eae3
+
 
 
 #################################################################################
