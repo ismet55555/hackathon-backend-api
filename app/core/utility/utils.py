@@ -161,6 +161,7 @@ def read_file(local_filepath: str, lines_to_read: int = -1) -> Union[List[str], 
     log.debug(f"Successfully read local file: {local_filepath}")
     return file_content
 
+
 def read_json_file(local_filepath: str) -> Union[dict, None, Any]:
     """Read a JSON file and return the content.
 
@@ -206,6 +207,7 @@ def overwrite_file(local_filepath: str, file_content: str) -> bool:
     log.debug(f"Successfully overwritten local file: {local_filepath}")
     return True
 
+
 def overwrite_json_file(local_filepath: str, json_data: dict) -> bool:
     """Overwrite a local JSON file with content.
 
@@ -225,6 +227,7 @@ def overwrite_json_file(local_filepath: str, json_data: dict) -> bool:
         return False
     log.debug(f"Successfully overwritten local JSON file: {local_filepath}")
     return True
+
 
 def is_process_running(process_name: str) -> bool:
     """Check if a process is running.

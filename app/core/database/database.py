@@ -1,17 +1,17 @@
 """Manage database."""
 
+from pprint import pformat, pprint
 from typing import List, Tuple, Union
-from pprint import pprint, pformat
 
 from app.core.utility.logger_setup import get_logger
-from app.core.utility.utils import read_json_file, overwrite_json_file
+from app.core.utility.utils import overwrite_json_file, read_json_file
 
 log = get_logger()
 
 
 class Database:
     """Manage database.
-    
+
     NOTE:
         Database is a local JSON file
     """
@@ -37,17 +37,21 @@ class Database:
         self.db = read_json_file(self.db_filepath)
         return self.db
 
-    def create_business(self, name: str, description: str, specifics: str) -> bool:
+    def create_business(
+        self, name: str, description: str, specifics: str, email: str, password: str
+    ) -> bool:
         """TODO."""
         log.info(f"Creating business: {name}")
         self.db = read_json_file(self.db_filepath)
-        
+
         # Increment next business ID number available
         next_id = len(self.db) + 1
         business_info = {
             "name": name,
             "description": description,
             "specifics": specifics,
+            "email": email,
+            "password": password,
         }
         self.db[str(next_id)] = business_info
         overwrite_json_file(self.db_filepath, self.db)
@@ -59,26 +63,45 @@ class Database:
         self.db = read_json_file(self.db_filepath)
         return [int(id) for id in self.db.keys()]
 
-    def get_business_info(self, id: int = None, name: str = None) -> Union[dict, None]:
+    def get_business_info(self, business_id: int = None, name: str = None) -> Union[dict, None]:
         """TODO."""
-        log.info(f"Getting business info: {id} ...")
+        log.info(f"Getting business info: {business_id} ...")
         self.db = read_json_file(self.db_filepath)
-        if id:
-            return self.db.get(str(id), {})
+        if business_id:
+            return self.db.get(str(business_id), {})
         if name:
             for _, business_info in self.db.items():
                 if business_info.get("name") == name:
                     return business_info
-        log.error(f"Failed to get business info. No ID or name provided.")
+        log.error("Failed to get business info. No ID or name provided.")
         return None
-        
 
-    def set_business_info(self, id: str, key: str, value: str) -> bool:
+    def set_business_info(self, business_id: str, key: str, value: str) -> bool:
         """TODO."""
-        log.info(f"Setting business info: {id} ...")
+        log.info(f"Setting business info: {business_id} ...")
         self.db = read_json_file(self.db_filepath)
-        business_info = self.db.get(id, {})
+        business_info = self.db.get(business_id, {})
         business_info[key] = value
-        self.db[id] = business_info
+        self.db[business_id] = business_info
         overwrite_json_file(self.db_filepath, self.db)
         return True
+
+    def set_post_request_info(self, business_id: str, post_request_info: dict) -> dict:
+        """TODO."""
+        log.info(f"Setting post request info: {business_id} ...")
+        self.db = read_json_file(self.db_filepath)
+        business_info = self.db.get(business_id, {})
+        business_info["post_request_info"] = post_request_info
+        self.db[business_id] = business_info
+        overwrite_json_file(self.db_filepath, self.db)
+        return business_info
+
+    def set_ai_responses(self, business_id: str, ai_responses: List[str]) -> dict:
+        """TODO."""
+        log.info(f"Setting AI responses: {business_id} ...")
+        self.db = read_json_file(self.db_filepath)
+        business_info = self.db.get(business_id, {})
+        business_info["ai_responses"] = ai_responses
+        self.db[business_id] = business_info
+        overwrite_json_file(self.db_filepath, self.db)
+        return business_info
