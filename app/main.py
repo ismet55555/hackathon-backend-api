@@ -1,30 +1,27 @@
 """Server routes definitions."""
 
-import json
 import os
 from pprint import pprint
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 import tweepy
 
 import requests
+
 from dotenv import load_dotenv
-from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request
+from fastapi import APIRouter, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
-from fastapi.security import OAuth2PasswordBearer
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from openai import AsyncOpenAI, OpenAI
-from pydantic import BaseModel
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
+from app.core.ai_bot.ai_bot import AiBot
 from app.core.database.database import Database
+from app.core.social.twitter import Twitter
 from app.core.fastapi_config import Settings
-
-# from app.core.logs.logs import Logs
 from app.core.utility.logger_setup import get_logger
 from app.core.utility.timing_middleware import TimingMiddleware
 from app.core.utility.utils import read_json_file
@@ -82,23 +79,21 @@ class ai_bot:
         return AsyncOpenAI(api_key=self.api_key)
 
 
+
 log = get_logger()
 load_dotenv()
 
 # Retrieving API Key
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 if not OPENAI_API_KEY:
-    message = "No OpenAI key found;. Make sure your .env file is set up correctly"
-    log.fatal(message)
-    raise ValueError(message)
-
-#   Headers for authentication with the OpenAI API
-headers = {
-    "Authorization": f"Bearer {os.getenv('OPENAI_API_KEY')}",
-    "Content-Type": "application/json",
-}
+    ERROR_MESSAGE = "No OpenAI key found;. Make sure your .env file is set up correctly"
+    log.fatal(ERROR_MESSAGE)
+    raise ValueError(ERROR_MESSAGE)
 
 
+######################################################################
+#              FastAPI init
+######################################################################
 def get_app():
     """Get application handle and add any middleware.
 
@@ -138,6 +133,7 @@ def get_app():
 
 app = get_app()
 database = Database("app/core/database/database.json")
+twitter = Twitter()
 templates = Jinja2Templates(directory="app/front-end/templates")
 
 
@@ -159,83 +155,32 @@ def app_health_check() -> Dict[str, str]:
     return {"status": "healthy"}
 
 
+
 #################################################################################
-#                                 Image Generator
+#                           Social Posts
 #################################################################################
-# Assuming the rest of your initial setup remains the same
+social_api_router = APIRouter(tags=["social"])
 
-
-class ImagePrompt(BaseModel):
-    prompt: str
-    n: int = 1  # Number of images to generate
-    size: str = "1024x1024"  # Pixels
-
-
-image_gen_api_router = APIRouter(tags=["openai_api"])
-
-
-@image_gen_api_router.post("/generate-image")
-async def generate_image(request: ImagePrompt):
-    """
-    Receives an image generation prompt from the front-end, sends it to OpenAI's API,
-    and returns the generated image(s) to the front-end.
-    """
-    # OpenAI API Settings
-    url = "https://api.openai.com/v1/images/generations"
-    headers = {
-        "Authorization": f"Bearer {os.getenv('OPENAI_API_KEY')}",
-        "Content-Type": "application/json",
-    }
-    payload = {
-        "prompt": request.prompt,
-        "n": request.n,
-        "size": request.size,
-        "model": "dall-e-3",
-        "quality": "hd",
+@app.post("/post_to_twitter")
+def post_to_twitter(tweet_text: str, tweet_image_url: str) -> dict:
+    """Post a tweet."""
+    success, tweet_id = twitter.post_tweet(tweet_text, tweet_image_url)
+    return {
+        "success": success,
+        "tweet_id": tweet_id
     }
 
-    # Make the API request
-    response = requests.post(url, json=payload, headers=headers)
+@app.post("/post_to_instagram")
+def post_to_instagram(instagram_text: str, instagram_image_url: str) -> dict:
+    """Post a tweet."""
+    # TODO
+    success, post_id = False, "34353453"
+    return {
+        "success": success,
+        "tweet_id": post_id
+    }
 
-    # Check for errors
-    if response.status_code != 200:
-        raise HTTPException(
-            status_code=response.status_code, detail=f"API request failed: {response.text}"
-        )
-
-    # Return the response data
-    return response.json()
-
-
-#################################################################################
-#                                 Network
-#################################################################################
-
-network_api_router = APIRouter(tags=["Testing"])
-
-
-@network_api_router.get("/TODO")
-def get_network_internet_connectivity() -> Dict[str, bool]:
-    """TODO."""
-    return {"todo": "todo"}
-
-
-@network_api_router.get("/yoyo")
-def get_general_network_state() -> Dict[str, Any]:
-    """TODO."""
-    return {"todo": "todo"}
-
-
-@network_api_router.get("/MYTEST")
-def get_my_test_info() -> Dict[str, Any]:
-    # """TODO."""
-    return {"todo": "todo"}
-
-
-app.include_router(network_api_router, prefix="/network")
-
-
-app.include_router(image_gen_api_router, prefix="/openai_api")
+app.include_router(social_api_router, prefix="/social")
 
 
 #################################################################################
@@ -300,12 +245,6 @@ ai_api_router = APIRouter(tags=["ai_api"])
 @ai_api_router.post("/send_post_request")
 async def send_post_request(id: str, mood: str, tone: str, description: str) -> bool:
     """Send a post request to OpenAPI."""
-    # input:
-    # api_key = None
-    # mood = None
-    # tone = None
-    # description = None
-
     info = {
         "caption_mood": mood,
         "cpation_tone": tone,
@@ -314,14 +253,13 @@ async def send_post_request(id: str, mood: str, tone: str, description: str) -> 
         "picture_size": "256x256",
         "in_progress": True,
     }
-
     database.set_post_request_info(business_id=id, post_request_info=info)
 
     pprint(database.get_business_info(business_id=id))
 
     # userInput = json.loads(jsonInput)
 
-    our_ai_bot = ai_bot(
+    our_ai_bot = AiBot(
         api_key=OPENAI_API_KEY,
         mood=mood,
         tone=tone,
@@ -355,7 +293,6 @@ def get_post_data(id: str) -> dict:
 
 
 app.include_router(ai_api_router, prefix="/ai_api")
-
 
 #################################################################################
 #                                 Social Media
