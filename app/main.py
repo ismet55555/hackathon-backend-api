@@ -1,11 +1,9 @@
 """Server routes definitions."""
 
 import os
-import urllib.request
 from pprint import pprint
 from typing import Any, Dict
 
-import tweepy
 from dotenv import load_dotenv
 from fastapi import APIRouter, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -22,7 +20,6 @@ from app.core.fastapi_config import Settings
 from app.core.social.twitter import Twitter
 from app.core.utility.logger_setup import get_logger
 from app.core.utility.timing_middleware import TimingMiddleware
-from app.core.utility.utils import read_json_file
 
 log = get_logger()
 load_dotenv()
@@ -227,7 +224,7 @@ def post_to_twitter(id: str) -> bool:
 
     twitter = Twitter(api_key, api_secret, access_token, access_token_secret)
 
-    twitter.post(content=ai_response["caption_text"], imageUrl=ai_response["picture_url"])
+    twitter.post(content=ai_response["caption_text"], image_url=ai_response["picture_url"])
 
     return True
 
