@@ -20,7 +20,7 @@ pipenv shell
 ./start-dev.sh
 
 # Windows
-uvicorn --reload --port 9500 --log-level debug app.main:app
+uvicorn --reload --host 0.0.0.0 --port 9500 --log-level debug app.main:app
 
 # CTRL-c to quit
 ```

@@ -1,7 +1,10 @@
 """AiBot class definition."""
 
 from openai import AsyncOpenAI, OpenAI
+import json
+from app.core.utility.logger_setup import get_logger
 
+log = get_logger()
 
 class AiBot:
     """Class for AI interactions."""
@@ -23,6 +26,7 @@ class AiBot:
     instagramCaption = None
 
     def __init__(self, api_key, mood, tone, description, businessInfo):
+        log.debug("AiBot: Initiating ...")
         self.api_key = api_key
         self.mood = mood
         self.tone = tone
@@ -88,6 +92,7 @@ user: { self.elevatedPrompt }"""
         
     async def understand_intent(self):
         """Understand Intent"""
+        log.info("AiBot: Understanding intent ...")
         client = self.get_connected_client()
         result = await client.chat.completions.create(
             model="gpt-3.5-turbo", messages=[{"role": "user", "content": self.undersantIntent}]
@@ -97,6 +102,7 @@ user: { self.elevatedPrompt }"""
     
     async def create_prompt_caption(self):
         """Create prompt that will generate an Instagram caption to pass on to subsecuent agents"""
+        log.info("AiBot: Creating prompt caption ...")
         client = self.get_connected_client()
         result = await client.chat.completions.create(
             model="gpt-3.5-turbo", messages=[{"role": "user", "content": self.createCaptionPrompt}]
@@ -106,6 +112,7 @@ user: { self.elevatedPrompt }"""
 
     async def create_prompt_image(self):
         """Create prompt that will generate an Instagram image to pass on to subsecuent agents"""
+        log.info("AiBot: Creating prompt image ...")
         client = self.get_connected_client()
         result = await client.chat.completions.create(
             model="gpt-3.5-turbo", messages=[{"role": "user", "content": self.createImagePrompt}]
@@ -115,15 +122,19 @@ user: { self.elevatedPrompt }"""
     
     async def create_instagram_caption(self):
         """Generate an Instagram caption"""
+        log.info("AiBot: Creating instagram caption ...")
         client = self.get_connected_client()
         result = await client.chat.completions.create(
             model="gpt-3.5-turbo", messages=[{"role": "user", "content": self.createInstagramCaption}]
         )
-        self.instagramCaption = result.choices[0].message.content
-        return result.choices[0].message.content
+        result_dict = json.loads(result.choices[0].message.content)
+        log.debug(f"Returned captions: {result_dict}")
+        self.instagramCaption = result_dict
+        return result_dict
     
     async def generate_post_content(self):
         """Generate post content."""
+        log.info("AiBot: Generating post content ...")
         client = self.get_connected_client()
         result = await client.chat.completions.create(
             model="gpt-3.5-turbo", messages=[{"role": "user", "content": self.textPrompt}]
@@ -132,6 +143,7 @@ user: { self.elevatedPrompt }"""
 
     async def generate_post_image(self):
         """Generate post image."""
+        log.info("AiBot: Generate post image ...")
         client = self.get_connected_client()
         response = await client.images.generate(
             model="dall-e-2",
