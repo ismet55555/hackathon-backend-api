@@ -42,7 +42,7 @@ class AiBot:
         client = self.get_connected_client()
         response = await client.images.generate(
             model="dall-e-2",
-            prompt="a white siamese cat",
+            prompt=self.imagePrompt,
             size="256x256",
             quality="standard",
             n=1,
