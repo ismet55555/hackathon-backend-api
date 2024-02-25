@@ -1,17 +1,17 @@
 """Manage database."""
 
+from pprint import pformat, pprint
 from typing import List, Tuple, Union
-from pprint import pprint, pformat
 
 from app.core.utility.logger_setup import get_logger
-from app.core.utility.utils import read_json_file, overwrite_json_file
+from app.core.utility.utils import overwrite_json_file, read_json_file
 
 log = get_logger()
 
 
 class Database:
     """Manage database.
-    
+
     NOTE:
         Database is a local JSON file
     """
@@ -37,17 +37,21 @@ class Database:
         self.db = read_json_file(self.db_filepath)
         return self.db
 
-    def create_business(self, name: str, description: str, specifics: str) -> bool:
+    def create_business(
+        self, name: str, description: str, specifics: str, email: str, password: str
+    ) -> bool:
         """TODO."""
         log.info(f"Creating business: {name}")
         self.db = read_json_file(self.db_filepath)
-        
+
         # Increment next business ID number available
         next_id = len(self.db) + 1
         business_info = {
             "name": name,
             "description": description,
             "specifics": specifics,
+            "email": email,
+            "password": password,
         }
         self.db[str(next_id)] = business_info
         overwrite_json_file(self.db_filepath, self.db)
@@ -71,7 +75,6 @@ class Database:
                     return business_info
         log.error(f"Failed to get business info. No ID or name provided.")
         return None
-        
 
     def set_business_info(self, id: str, key: str, value: str) -> bool:
         """TODO."""
