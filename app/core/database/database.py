@@ -45,7 +45,7 @@ class Database:
 
     def create_business(
         self, name: str, description: str, specifics: str, email: str, password: str
-    ) -> bool:
+    ) -> Tuple[bool, dict]:
         """TODO."""
         log.info(f"Creating business: {name}")
         self.db = read_json_file(self.db_filepath)

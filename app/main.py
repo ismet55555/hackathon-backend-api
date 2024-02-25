@@ -24,8 +24,6 @@ from app.core.utility.logger_setup import get_logger
 from app.core.utility.timing_middleware import TimingMiddleware
 from app.core.utility.utils import read_json_file
 
-import urllib.request
-
 log = get_logger()
 load_dotenv()
 
@@ -101,30 +99,6 @@ def app_health_check() -> Dict[str, str]:
 
 
 #################################################################################
-#                           Social Posts
-#################################################################################
-social_api_router = APIRouter(tags=["social"])
-
-
-@social_api_router.post("/post_to_twitter")
-def post_to_twitter(tweet_text: str, tweet_image_url: str) -> dict:
-    """Post a tweet."""
-    success, tweet_id = twitter.post_tweet(tweet_text, tweet_image_url)
-    return {"success": success, "tweet_id": tweet_id}
-
-
-@social_api_router.post("/post_to_instagram")
-def post_to_instagram(instagram_text: str, instagram_image_url: str) -> dict:
-    """Post a tweet."""
-    # TODO
-    success, post_id = False, "34353453"
-    return {"success": success, "tweet_id": post_id}
-
-
-app.include_router(social_api_router, prefix="/social")
-
-
-#################################################################################
 #                                 BUSINESS
 #################################################################################
 business_api_router = APIRouter(tags=["business"])
@@ -196,7 +170,6 @@ async def send_post_request(id: str, mood: str, tone: str, description: str) -> 
     }
     database.set_post_request_info(business_id=id, post_request_info=info)
 
-
     our_ai_bot = AiBot(
         api_key=OPENAI_API_KEY,
         mood=mood,
@@ -252,14 +225,9 @@ def post_to_twitter(id: str) -> bool:
     # get image and content from database
     ai_response = database.get_business_info(business_id=id)["post_request"]["ai_response"]
 
-    twitterClient = Twitter(
-        api_key,
-        api_secret,
-        access_token,
-        access_token_secret
-    )
-    
-    twitterClient.post(content=ai_response["caption_text"],imageUrl=ai_response["picture_url"])
+    twitter = Twitter(api_key, api_secret, access_token, access_token_secret)
+
+    twitter.post(content=ai_response["caption_text"], imageUrl=ai_response["picture_url"])
 
     return True
 

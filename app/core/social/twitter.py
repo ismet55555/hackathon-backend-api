@@ -2,16 +2,15 @@
 
 import base64
 import os
+import urllib
 from typing import Tuple
 
 import requests
+import tweepy
 from fastapi import HTTPException
 from requests_oauthlib import OAuth1
 
 from app.core.utility.logger_setup import get_logger
-
-import urllib
-import tweepy
 
 log = get_logger()
 
@@ -33,8 +32,12 @@ class Twitter:
         return
 
     def post(self, content, imageUrl):
-        client_v1 = self.get_twitter_conn_v1(self.api_key, self.api_secret, self.access_token, self.access_token_secret)
-        client_v2 = self.get_twitter_conn_v2(self.api_key, self.api_secret, self.access_token, self.access_token_secret)
+        client_v1 = self.get_twitter_conn_v1(
+            self.api_key, self.api_secret, self.access_token, self.access_token_secret
+        )
+        client_v2 = self.get_twitter_conn_v2(
+            self.api_key, self.api_secret, self.access_token, self.access_token_secret
+        )
 
         urllib.request.urlretrieve(imageUrl, "tempImage.png")
 
@@ -43,7 +46,9 @@ class Twitter:
 
         client_v2.create_tweet(text=content, media_ids=[media_id])
 
-    def get_twitter_conn_v1(self, api_key, api_secret, access_token, access_token_secret) -> tweepy.API:
+    def get_twitter_conn_v1(
+        self, api_key, api_secret, access_token, access_token_secret
+    ) -> tweepy.API:
         """Get twitter conn 1.1"""
 
         auth = tweepy.OAuth1UserHandler(api_key, api_secret)
@@ -53,7 +58,9 @@ class Twitter:
         )
         return tweepy.API(auth)
 
-    def get_twitter_conn_v2(self, api_key, api_secret, access_token, access_token_secret) -> tweepy.Client:
+    def get_twitter_conn_v2(
+        self, api_key, api_secret, access_token, access_token_secret
+    ) -> tweepy.Client:
         """Get twitter conn 2.0"""
 
         client = tweepy.Client(
@@ -64,4 +71,3 @@ class Twitter:
         )
 
         return client
-
