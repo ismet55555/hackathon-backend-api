@@ -1,13 +1,12 @@
 """Server routes definitions."""
 
 import os
+import urllib.request
 from pprint import pprint
 from typing import Any, Dict
 
-import tweepy
-
 import requests
-
+import tweepy
 from dotenv import load_dotenv
 from fastapi import APIRouter, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -25,60 +24,6 @@ from app.core.social.twitter import Twitter
 from app.core.utility.logger_setup import get_logger
 from app.core.utility.timing_middleware import TimingMiddleware
 from app.core.utility.utils import read_json_file
-
-import urllib.request
-
-class ai_bot:
-
-    # ================= ATTRIBUTES ===============
-
-    api_key = None
-    mood = None
-    tone = None
-    description = None
-    textPrompt = None
-    imagePrompt = (None,)
-
-    # ================= CONSTRUCTORS ===============
-
-    def __init__(self, api_key, mood, tone, description):
-        self.api_key = api_key
-        self.mood = mood
-        self.tone = tone
-        self.description = description
-        self.textPrompt = f"""Create an Instagram post given the following information. Use the description as a general guideline about the topic. The post should have the goal of becoming as viral as possible. Aim to avoid extreme views and or activism.
-    Mood: {mood} Tone: {tone} Description: {description}"""
-        self.imagePrompt = f"""Create an image for an Instagram post given the following information. Use the description as a general guideline about the topic. The post should have the goal of becoming as viral as possible. Aim to avoid extreme views and or activism.
-    Mood: {mood} Tone: {tone} Description: {description}"""
-
-    # ================= METHODS ===============
-
-    # generate post content
-    async def generate_post_content(self):
-        client = self.get_connected_client()
-        result = await client.chat.completions.create(
-            model="gpt-3.5-turbo", messages=[{"role": "user", "content": self.textPrompt}]
-        )
-        return result.choices[0].message.content
-
-    # generate post image
-    async def generate_post_image(self):
-        client = self.get_connected_client()
-        response = await client.images.generate(
-            model="dall-e-2",
-            prompt="a white siamese cat",
-            size="256x256",
-            quality="standard",
-            n=1,
-        )
-        return response.data[0].url
-
-    # ================= HELPER METHODS ===============
-
-    def get_connected_client(self):
-        return AsyncOpenAI(api_key=self.api_key)
-
-
 
 log = get_logger()
 load_dotenv()
@@ -250,10 +195,7 @@ async def send_post_request(id: str, mood: str, tone: str, description: str) -> 
         "in_progress": True,
     }
     database.set_post_request_info(business_id=id, post_request_info=info)
-
-    pprint(database.get_business_info(business_id=id))
-
-    # userInput = json.loads(jsonInput)
+    # pprint(database.get_business_info(business_id=id))
 
     our_ai_bot = AiBot(
         api_key=OPENAI_API_KEY,
@@ -267,11 +209,7 @@ async def send_post_request(id: str, mood: str, tone: str, description: str) -> 
     generated_image = await our_ai_bot.generate_post_image()
 
     responses = {"caption_text": generated_content, "picture_url": generated_image}
-
-    # add post info to database
     database.set_ai_response(business_id=id, ai_response=responses)
-
-    # respond success
     return True
 
 
@@ -316,7 +254,9 @@ def post_to_twitter(id: str) -> bool:
         )
         return tweepy.API(auth)
 
-    def get_twitter_conn_v2(api_key, api_secret, access_token, access_token_secret) -> tweepy.Client:
+    def get_twitter_conn_v2(
+        api_key, api_secret, access_token, access_token_secret
+    ) -> tweepy.Client:
         """Get twitter conn 2.0"""
 
         client = tweepy.Client(

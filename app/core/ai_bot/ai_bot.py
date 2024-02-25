@@ -11,7 +11,7 @@ class AiBot:
     tone = None
     description = None
     textPrompt = None
-    imagePrompt = (None,)
+    imagePrompt = None
 
     def __init__(self, api_key, mood, tone, description):
         self.api_key = api_key
