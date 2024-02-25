@@ -73,7 +73,7 @@ class Database:
             for _, business_info in self.db.items():
                 if business_info.get("name") == name:
                     return business_info
-        log.error(f"Failed to get business info. No ID or name provided.")
+        log.error("Failed to get business info. No ID or name provided.")
         return None
 
     def set_business_info(self, id: str, key: str, value: str) -> bool:
@@ -85,3 +85,13 @@ class Database:
         self.db[id] = business_info
         overwrite_json_file(self.db_filepath, self.db)
         return True
+
+    def set_post_request_info(self, id: str, post_request_info: dict) -> dict:
+        """TODO."""
+        log.info(f"Setting post request info: {id} ...")
+        self.db = read_json_file(self.db_filepath)
+        business_info = self.db.get(id, {})
+        business_info["post_request_info"] = post_request_info
+        self.db[id] = business_info
+        overwrite_json_file(self.db_filepath, self.db)
+        return business_info
