@@ -23,19 +23,14 @@ from app.core.utility.logger_setup import get_logger
 from app.core.utility.timing_middleware import TimingMiddleware
 
 log = get_logger()
-
 load_dotenv()
-######################################################################
-# |
-# |              OpenAI API Key Info
-# |
-######################################################################
 
 # Retrieving API Key
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-# Ensure API key is loaded right
 if not OPENAI_API_KEY:
-    raise ValueError("No OpenAI key found;. Make sure your .env file is set up correctly")
+    message = "No OpenAI key found;. Make sure your .env file is set up correctly"
+    log.fatal(message)
+    raise ValueError(message)
 
 #   Headers for authentication with the OpenAI API
 headers = {
@@ -44,11 +39,6 @@ headers = {
 }
 
 
-######################################################################
-# |
-# |
-# |
-######################################################################
 def get_app():
     """Get application handle and add any middleware.
 
@@ -205,12 +195,6 @@ def remove_all_businesses() -> dict:
     """Get all business ids."""
     success = database.remove_all_businesses()
     return {"success": success}
-
-
-@business_api_router.post("/send_business_post_request")
-def send_business_post_request() -> bool:
-    """Send a post request to OpenAPI."""
-    pass
 
 
 app.include_router(business_api_router, prefix="/business")

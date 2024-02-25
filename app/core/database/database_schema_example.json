@@ -5,7 +5,7 @@
       "specifics": "Burgers, fries, shakes",
       "email": "blah@gmail.com",
       "password": "1234",
-      "posts_request": {  # Return this
+      "posts_request": {
         "caption_mood": "New Burger",
         "cpation_tone": "Try our new burger!",
         "caption_description": "Our new burger is the best thing since sliced bread. Try it today!",
