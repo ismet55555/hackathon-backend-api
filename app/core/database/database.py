@@ -63,12 +63,12 @@ class Database:
         self.db = read_json_file(self.db_filepath)
         return [int(id) for id in self.db.keys()]
 
-    def get_business_info(self, id: int = None, name: str = None) -> Union[dict, None]:
+    def get_business_info(self, business_id: int = None, name: str = None) -> Union[dict, None]:
         """TODO."""
-        log.info(f"Getting business info: {id} ...")
+        log.info(f"Getting business info: {business_id} ...")
         self.db = read_json_file(self.db_filepath)
-        if id:
-            return self.db.get(str(id), {})
+        if business_id:
+            return self.db.get(str(business_id), {})
         if name:
             for _, business_info in self.db.items():
                 if business_info.get("name") == name:
@@ -76,22 +76,32 @@ class Database:
         log.error("Failed to get business info. No ID or name provided.")
         return None
 
-    def set_business_info(self, id: str, key: str, value: str) -> bool:
+    def set_business_info(self, business_id: str, key: str, value: str) -> bool:
         """TODO."""
-        log.info(f"Setting business info: {id} ...")
+        log.info(f"Setting business info: {business_id} ...")
         self.db = read_json_file(self.db_filepath)
-        business_info = self.db.get(id, {})
+        business_info = self.db.get(business_id, {})
         business_info[key] = value
-        self.db[id] = business_info
+        self.db[business_id] = business_info
         overwrite_json_file(self.db_filepath, self.db)
         return True
 
-    def set_post_request_info(self, id: str, post_request_info: dict) -> dict:
+    def set_post_request_info(self, business_id: str, post_request_info: dict) -> dict:
         """TODO."""
-        log.info(f"Setting post request info: {id} ...")
+        log.info(f"Setting post request info: {business_id} ...")
         self.db = read_json_file(self.db_filepath)
-        business_info = self.db.get(id, {})
+        business_info = self.db.get(business_id, {})
         business_info["post_request_info"] = post_request_info
-        self.db[id] = business_info
+        self.db[business_id] = business_info
+        overwrite_json_file(self.db_filepath, self.db)
+        return business_info
+
+    def set_ai_responses(self, business_id: str, ai_responses: List[str]) -> dict:
+        """TODO."""
+        log.info(f"Setting AI responses: {business_id} ...")
+        self.db = read_json_file(self.db_filepath)
+        business_info = self.db.get(business_id, {})
+        business_info["ai_responses"] = ai_responses
+        self.db[business_id] = business_info
         overwrite_json_file(self.db_filepath, self.db)
         return business_info
