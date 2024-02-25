@@ -1,26 +1,22 @@
 """Server routes definitions."""
 
-import base64
 import os
-from io import BytesIO
 from pprint import pprint
 from typing import Any, Dict
 
-import requests
 from dotenv import load_dotenv
 from fastapi import APIRouter, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from pydantic import BaseModel
-from requests_oauthlib import OAuth1
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
 from app.core.ai_bot.ai_bot import AiBot
 from app.core.database.database import Database
+from app.core.social.twitter import Twitter
 from app.core.fastapi_config import Settings
 from app.core.utility.logger_setup import get_logger
 from app.core.utility.timing_middleware import TimingMiddleware
@@ -34,25 +30,6 @@ if not OPENAI_API_KEY:
     ERROR_MESSAGE = "No OpenAI key found;. Make sure your .env file is set up correctly"
     log.fatal(ERROR_MESSAGE)
     raise ValueError(ERROR_MESSAGE)
-
-
-# New endpoint for Twitter API
-def get_twitter_bearer_token():
-    key = os.getenv("TWITTER_API_KEY")
-    secret = os.getenv("TWITTER_API_KEY_SECRET")
-    bearer_token_credentials = base64.b64encode(f"{key}:{secret}".encode("utf-8")).decode("utf-8")
-    headers = {
-        "Authorization": f"Basic {bearer_token_credentials}",
-        "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
-    }
-    response = requests.post(
-        "https://api.twitter.com/oauth2/token",
-        headers=headers,
-        data={"grant_type": "client_credentials"},
-    )
-    if response.status_code != 200:
-        raise HTTPException(status_code=500, detail="Failed to obtain bearer token")
-    return response.json()["access_token"]
 
 
 ######################################################################
@@ -97,6 +74,7 @@ def get_app():
 
 app = get_app()
 database = Database("app/core/database/database.json")
+twitter = Twitter()
 templates = Jinja2Templates(directory="app/front-end/templates")
 
 
@@ -118,113 +96,32 @@ def app_health_check() -> Dict[str, str]:
     return {"status": "healthy"}
 
 
-#################################################################################
-#                                 Image Generator
-#################################################################################
-# Assuming the rest of your initial setup remains the same
-class ImagePrompt(BaseModel):
-    prompt: str
-    n: int = 1  # Number of images to generate
-    size: str = "1024x1024"  # Pixels
-
-
-image_gen_api_router = APIRouter(tags=["openai_api"])
-
-
-@image_gen_api_router.post("/generate-image")
-async def generate_image(request: ImagePrompt) -> Any:
-    """Receives an image generation prompt from the front-end, sends it to OpenAI's API,
-    and returns the generated image(s) to the front-end.
-    """
-    # OpenAI API Settings
-    url = "https://api.openai.com/v1/images/generations"
-    headers = {
-        "Authorization": f"Bearer {os.getenv('OPENAI_API_KEY')}",
-        "Content-Type": "application/json",
-    }
-    payload = {
-        "prompt": request.prompt,
-        "n": request.n,
-        "size": request.size,
-        "model": "dall-e-3",
-        "quality": "hd",
-    }
-    response = requests.post(url, json=payload, headers=headers, timeout=15)
-    if response.status_code != 200:
-        raise HTTPException(
-            status_code=response.status_code, detail=f"API request failed: {response.text}"
-        )
-    return response.json()
-
 
 #################################################################################
-#                                Twitter Tweet Generator
+#                           Social Posts
 #################################################################################
-class TwitterPost(BaseModel):
-    status: str  # the text of the tweet
-    image_url: str = "whales.jpeg"  # url of the image to attach
+social_api_router = APIRouter(tags=["social"])
 
-
-@app.post("/post-to-twitter")
-def post_to_twitter(post: TwitterPost):
-    #   Downloading the image
-    response = requests.get(post.image_url)
-    if response.status_code != 200:
-        raise HTTPException(status_code=400, detail="Could not download this image")
-
-    #   Convert the image to the format required by the APIv1
-    files = {"media": response.content}
-    media_upload_url = "https://upload.twitter.com/1.1/media/upload.json"
-
-    #   Step 2: Upload the image to Twitter
-    oauth = OAuth1(
-        os.getenv("TWITTER_API_KEY"),
-        os.getenv("TWITTER_API_KEY_SECRET"),
-        os.getenv("TWITTER_ACCESS_TOKEN"),
-        os.getenv("TWITTER_ACCESS_TOKEN_SECRET"),
-    )
-
-    response = requests.post(media_upload_url, files=files, auth=oauth)
-
-    # Before attempting to decode the response, check if it was successful
-    if response.status_code != 200:
-        # Log or print the error response for debugging
-        error_message = f"Failed to upload media: Status code: {response.status_code}, Response: {response.text}"
-        raise HTTPException(status_code=500, detail=error_message)
-
-    # Attempt to decode the JSON response
-    try:
-        media_id = response.json()["media_id_string"]
-        if not media_id:
-            raise HTTPException(status_code=500, detail="Media ID not found in the response")
-    except ValueError as e:  #       Catches JSON decode error and raises http exception
-        raise HTTPException(status_code=500, detail=f"JSON decode error: {str(e)}")
-
-    #   Step 3: Post the tweet with the image using Twitter API v2
-    tweet_url = "https://api.twitter.com/2/tweets"
-    headers = {
-        "Authorization": f"Bearer {get_twitter_bearer_token()}",
-        "Content-Type": "application/json",
+@app.post("/post_to_twitter")
+def post_to_twitter(tweet_text: str, tweet_image_url: str) -> dict:
+    """Post a tweet."""
+    success, tweet_id = twitter.post_tweet(tweet_text, tweet_image_url)
+    return {
+        "success": success,
+        "tweet_id": tweet_id
     }
-    payload = {
-        "text": post.status,
-        "media": {
-            "media_ids": [
-                media_id
-            ]  # Replace media_id with the actual media ID from the upload response #????????????
-        },
+
+@app.post("/post_to_instagram")
+def post_to_instagram(instagram_text: str, instagram_image_url: str) -> dict:
+    """Post a tweet."""
+    # TODO
+    success, post_id = False, "34353453"
+    return {
+        "success": success,
+        "tweet_id": post_id
     }
-    response = requests.post(tweet_url, json=payload, headers=headers)
 
-    if response.status_code != 201:
-        raise HTTPException(
-            status_code=response.status_code, detail=f"Failed to post tweet: {response.text}"
-        )
-
-    return {"message": "Tweet posted SUCCESSFULLY", "tweet_id": response.json()["data"]["id"]}
-
-
-app.include_router(image_gen_api_router, prefix="/openai_api")
+app.include_router(social_api_router, prefix="/social")
 
 
 #################################################################################
@@ -337,24 +234,3 @@ def get_post_data(id: str) -> dict:
 
 
 app.include_router(ai_api_router, prefix="/ai_api")
-
-
-#################################################################################
-#                                 Social Media
-#################################################################################
-social_api_router = APIRouter(tags=["social"])
-
-
-@social_api_router.post("/post_to_instagram")
-def post_to_instagram() -> bool:
-    """Post to Instagram."""
-    return True
-
-
-# @social_api_router.post("/post_to_twitter")
-# def post_to_twitter() -> bool:
-#     """Post to Twitter/x."""
-#     return True
-
-
-app.include_router(social_api_router, prefix="/social")
