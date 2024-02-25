@@ -8,7 +8,7 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [requires]
-python_version = "3"
+python_version = "3.11"
 
 [packages]
 fastapi = "*"
@@ -20,6 +20,7 @@ python-dotenv = "*"
 slowapi = "*"
 uvicorn = "*"
 exceptiongroup = "*"
+openai = "*"
 
 [dev-packages]
 black ="*"

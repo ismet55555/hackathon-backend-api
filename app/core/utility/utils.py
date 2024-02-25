@@ -14,53 +14,6 @@ from app.core.utility.logger_setup import get_logger
 log = get_logger()
 
 
-def is_window_open(window_name: str) -> bool:
-    """Check if a window with the given name is open.
-
-    Args:
-        window_name: Name of the window to check
-
-    Returns:
-        True if a window with the given name is open, False otherwise
-    """
-    log.debug(f'Checking if any OS window name with "{window_name}" is open ...')
-    try:
-        result = subprocess.run(["wmctrl", "-lx"], capture_output=True, text=True, check=True)
-        lines = result.stdout.strip().split("\n")
-        matching_windows = [line for line in lines if window_name in line]
-        if matching_windows:
-            log.debug(f'Successfully found OS window "{window_name}" is open')
-            return True
-        log.debug(f'Failed to find OS window "{window_name}" open')
-        return False
-    except subprocess.CalledProcessError:
-        log.debug(f'Failed to find OS window "{window_name}" open')
-        return False
-
-
-def close_all_windows(window_name: str) -> None:
-    """Close all windows with the matching specified name.
-
-    Args:
-        window_name: Name of the windows to close
-    """
-    log.info(f'Closing all open OS windows with name including "{window_name}" ...')
-    try:
-        # Get the list of window IDs with matching name
-        result = subprocess.run(["wmctrl", "-lx"], capture_output=True, text=True, check=True)
-        lines = result.stdout.strip().split("\n")
-        matching_windows = [line.split()[0] for line in lines if window_name in line]
-
-        # Close each matching window
-        for window_id in matching_windows:
-            log.debug(f'Closing OS window with ID "{window_id}" ...')
-            subprocess.run(["wmctrl", "-ic", window_id], check=True)
-    except subprocess.CalledProcessError as error:
-        log.error(f'Failed closing all open OS windows with name "{window_name}": {error}')
-        raise
-    log.debug(f'Successfully closed all OS windows with name "{window_name}"')
-
-
 def run_shell_script_file(sh_file_path: str) -> None:
     """Run a shell script file.
 
@@ -86,7 +39,7 @@ def run_shell_script_file(sh_file_path: str) -> None:
     log.debug("Successfully ran shell script file")
 
 
-def update_key_in_json_file(json_file_path: str, key: str, value: Any) -> bool:
+def update_top_level_key_in_json_file(json_file_path: str, key: str, value: Any) -> bool:
     """Update a JSON file with a key/value pair.
 
     Args:
@@ -209,6 +162,31 @@ def read_file(local_filepath: str, lines_to_read: int = -1) -> Union[List[str], 
     return file_content
 
 
+def read_json_file(local_filepath: str) -> Union[dict, None, Any]:
+    """Read a JSON file and return the content.
+
+    Args:
+        local_filepath: Local absolute file path to read
+
+    Returns:
+        Dictionary of JSON file content
+    """
+    log.debug(f"Reading local JSON file: {local_filepath} ...")
+    if not Path(local_filepath).is_file():
+        log.error(f"Failed to read local JSON file does not exist: {local_filepath}")
+        return None
+
+    try:
+        with open(local_filepath, "r", encoding="utf-8") as json_file:
+            json_data = json.load(json_file)
+    except (JSONDecodeError, IOError, OSError) as error:
+        log.error(f"Failed to read local JSON file: {error}")
+        return None
+
+    log.debug(f"Successfully read local JSON file: {local_filepath}")
+    return json_data
+
+
 def overwrite_file(local_filepath: str, file_content: str) -> bool:
     """Overwrite a local file with content.
 
@@ -227,6 +205,27 @@ def overwrite_file(local_filepath: str, file_content: str) -> bool:
         log.error(f"Failed to overwrite local file: {error}")
         return False
     log.debug(f"Successfully overwritten local file: {local_filepath}")
+    return True
+
+
+def overwrite_json_file(local_filepath: str, json_data: dict) -> bool:
+    """Overwrite a local JSON file with content.
+
+    Args:
+        local_filepath: Local absolute file path to overwrite
+        json_data: JSON data to write to file
+
+    Returns:
+        True if successful, False otherwise
+    """
+    log.debug(f"Overwriting local JSON file: {local_filepath} ...")
+    try:
+        with open(local_filepath, "w", encoding="utf-8") as json_file:
+            json.dump(json_data, json_file, indent=4)
+    except (JSONDecodeError, IOError, OSError, FileNotFoundError) as error:
+        log.error(f"Failed to overwrite local JSON file: {error}")
+        return False
+    log.debug(f"Successfully overwritten local JSON file: {local_filepath}")
     return True
 
 

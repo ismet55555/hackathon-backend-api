@@ -1,0 +1,31 @@
+  {
+    "1": {
+      "name": "Burger King",
+      "description": "Fast food chain",
+      "specifics": "Burgers, fries, shakes",
+      "email": "blah@gmail.com",
+      "password": "1234",
+      "posts_request": {
+        "caption_mood": "New Burger",
+        "cpation_tone": "Try our new burger!",
+        "caption_description": "Our new burger is the best thing since sliced bread. Try it today!",
+        "picture_prompt": "A cool burger joint",
+        "picture_size": "1024x1024",
+        "in_progress": false,
+        "ai_responses": [
+          {
+            "caption_text": "value",
+            "picture_url": "value"
+          },
+          {
+            "caption_text": "value",
+            "picture_url": "value"
+          },
+          {
+            "caption_text": "value",
+            "picture_url": "value"
+          }
+        ]
+      }
+    }
+  }
