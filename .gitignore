@@ -166,3 +166,7 @@ cython_debug/
 appsettings.env
 
 ./app/core/database/database.json
+
+**/*.jpeg
+**/*.jpg
+**/*.png
