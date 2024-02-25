@@ -175,10 +175,19 @@ async def send_post_request(id: str, mood: str, tone: str, description: str) -> 
     )
 
     # send post request
-    generated_content = await our_ai_bot.generate_post_content()
+    # generated_content = await our_ai_bot.generate_post_content()
+    intent = await our_ai_bot.understand_intent()
+    instagramCaptionPrompt = await our_ai_bot.create_prompt_caption()
+    imagePrompt = await our_ai_bot.create_prompt_image()
+
+    print("Intent: ", intent)
+    print("Prompt to generate Instagram Caption: ", instagramCaptionPrompt)
+    print("Prompt to generate Image: ", imagePrompt)
+    instagramCaption = await our_ai_bot.create_instagram_caption()
     generated_image = await our_ai_bot.generate_post_image()
 
-    responses = {"caption_text": generated_content, "picture_url": generated_image}
+
+    responses = {"caption_text": instagramCaption, "picture_url": generated_image}
     database.set_ai_response(business_id=id, ai_response=responses)
     return True
 
