@@ -1,6 +1,9 @@
 """Server routes defintioins."""
 
 from typing import Any, Dict, List
+from app.core.database.database import Database
+
+from pprint import pprint
 
 from fastapi import APIRouter, BackgroundTasks, FastAPI, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,7 +15,6 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
 from app.core.fastapi_config import Settings
-from app.core.logs.logs import Logs
 from app.core.utility.logger_setup import get_logger
 from app.core.utility.timing_middleware import TimingMiddleware
 
@@ -57,7 +59,7 @@ def get_app() -> FastAPI:
 
 
 app = get_app()
-logs = Logs()
+database = Database("app/core/database/database.json")
 templates = Jinja2Templates(directory="app/front-end/templates")
 
 
@@ -78,41 +80,120 @@ def app_health_check() -> Dict[str, str]:
     """Application health check status."""
     return {"status": "healthy"}
 
-
-#################################################################################
-#                                 Network
-#################################################################################
-network_api_router = APIRouter(tags=["todo"])
-
-
-@network_api_router.get("/TODO")
-def get_network_internet_connectivity() -> Dict[str, bool]:
+@app.get("/test_stuff_1")
+def test_stuff_2() -> dict:
     """TODO."""
-    return {"todo": "todo"}
+    data = database.create_business("yo", "cool", "blah")
+    pprint(data)
+    return {"data": data}
 
-
-@network_api_router.get("/TODO")
-def get_general_network_state() -> Dict[str, Any]:
+@app.get("/test_stuff_2")
+def test_stuff_2() -> dict:
     """TODO."""
-    return {"todo": "todo"}
-
-app.include_router(network_api_router, prefix="/network")
+    data = database.get_business_info(1)
+    pprint(data)
+    return {"data": data}
 
 
 #################################################################################
-#                                 WiFi
+#                                 BUSINESS
 #################################################################################
-wifi_api_router = APIRouter(tags=["todo2"])
+business_api_router = APIRouter(tags=["business"])
 
+@business_api_router.get("/create")
+def create_a_business(name: str, description: str, specifics: str) -> dict:
+    """Create a business."""
+    success = database.create_business(name, description, specifics)
+    return {"success": success}
 
-@wifi_api_router.post("/todo")
-@app.state.limiter.limit("1/second")
-def post_wifi_toggle(status: bool, request: Request) -> Dict[str, Any]:
-    """TODO."""
-    # success, error_message = wifi.wifi_toggle(status)
+@business_api_router.get("/get_business_info_with_id")
+def get_business_info_with_id(id: str) -> dict:
+    """Get business info with id."""
+    info = database.get_business_info(int(id))
     return {
-        "success": True,
-        "error_message": "TODO",
+        "info": info
     }
 
-app.include_router(wifi_api_router, prefix="/todo")
+@business_api_router.get("/get_business_info_with_name")
+def get_business_info_with_name(name: str) -> dict:
+    """Get business info with name."""
+    info = database.get_business_info(name=name)
+    return {
+        "info": info
+    }
+
+@business_api_router.get("/get_all_Business_info")
+def get_all_Business_info() -> dict:
+    """Get all business info."""
+    info = database.get_all_business_info()
+    return {
+        "ids": info
+    }
+
+@business_api_router.get("/get_all_business_ids")
+def get_all_business_ids() -> dict:
+    """Get all business ids."""
+    info = database.get_all_business_ids()
+    return {
+        "ids": info
+    }
+
+@business_api_router.post("/remove_all_businesses")
+def remove_all_businesses() -> dict:
+    """Get all business ids."""
+    success = database.remove_all_businesses()
+    return {
+        "success": success
+    }
+
+
+@business_api_router.post("/send_business_post_request")
+def send_business_post_request() -> bool:
+    """Send a post request to OpenAPI."""
+    pass
+
+
+app.include_router(business_api_router, prefix="/business")
+
+
+
+#################################################################################
+#                                 AI API
+#################################################################################
+ai_api_router = APIRouter(tags=["ai_api"])
+
+@ai_api_router.post("/send_post_request")
+def send_post_request() -> bool:
+    """Send a post request to OpenAPI."""
+    return True
+
+@ai_api_router.post("/check_post_status")
+def check_post_status() -> bool:
+    """Check status of OpenAPI request."""
+    return True
+
+@ai_api_router.get("/get_post_data")
+def get_post_data() -> dict:
+    """Get the data returened from OpenAPI if ready."""
+    return {}
+
+app.include_router(ai_api_router, prefix="/ai_api")
+
+
+
+#################################################################################
+#                                 Social Media
+#################################################################################
+social_api_router = APIRouter(tags=["social"])
+
+@social_api_router.post("/post_to_instagram")
+def post_to_instagram() -> bool:
+    """Post to Instagram."""
+    return True
+
+@social_api_router.post("/post_to_twitter")
+def post_to_twitter() -> bool:
+    """Post to Twitter/x."""
+    return True
+
+app.include_router(social_api_router, prefix="/social")
