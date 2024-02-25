@@ -61,7 +61,7 @@ class Database:
         }
         self.db[str(next_id)] = business_info
         overwrite_json_file(self.db_filepath, self.db)
-        return True, business_info
+        return True, business_info, str(next_id)
 
     def get_all_business_ids(self) -> List[int]:
         """TODO."""
