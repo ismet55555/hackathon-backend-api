@@ -19,6 +19,7 @@ pydantic-settings = "*"
 python-dotenv = "*"
 slowapi = "*"
 uvicorn = "*"
+exceptiongroup = "*"
 
 [dev-packages]
 black ="*"

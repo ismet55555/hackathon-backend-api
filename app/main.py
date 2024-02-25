@@ -1,11 +1,11 @@
-"""Server routes defintioins."""
+"""Server routes definitions."""
 
 from typing import Any, Dict, List
 from app.core.database.database import Database
 
 from pprint import pprint
 
-from fastapi import APIRouter, BackgroundTasks, FastAPI, Query, Request
+from fastapi import APIRouter, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -13,15 +13,45 @@ from fastapi.templating import Jinja2Templates
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
+from fastapi import Depends, HTTPException
+from fastapi.security import OAuth2PasswordBearer
+from pydantic import BaseModel
 
 from app.core.fastapi_config import Settings
 from app.core.utility.logger_setup import get_logger
 from app.core.utility.timing_middleware import TimingMiddleware
 
+import requests
+import os
+from dotenv import load_dotenv
+
 log = get_logger()
 
+load_dotenv()
+######################################################################
+#|
+#|              OpenAI API Key Info
+#|
+######################################################################
 
-def get_app() -> FastAPI:
+#Retrieving API Key
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+#Ensure API key is loaded right
+if not OPENAI_API_KEY:
+    raise ValueError("No OpenAI key found;. Make sure your .env file is set up correctly")
+
+#   Headers for authentication with the OpenAI API
+headers = {
+        "Authorization": f"Bearer {os.getenv('OPENAI_API_KEY')}",
+        "Content-Type": "application/json"
+    }
+
+######################################################################
+#|
+#|
+#|
+######################################################################
+def get_app():
     """Get application handle and add any middleware.
 
     Returns:
@@ -80,19 +110,50 @@ def app_health_check() -> Dict[str, str]:
     """Application health check status."""
     return {"status": "healthy"}
 
-@app.get("/test_stuff_1")
-def test_stuff_2() -> dict:
-    """TODO."""
-    data = database.create_business("yo", "cool", "blah")
-    pprint(data)
-    return {"data": data}
+# @app.get("/test_stuff_1")
+# def test_stuff_2() -> dict:
 
-@app.get("/test_stuff_2")
-def test_stuff_2() -> dict:
-    """TODO."""
-    data = database.get_business_info(1)
-    pprint(data)
-    return {"data": data}
+#################################################################################
+#                                 Image Generator
+#################################################################################
+class ImagePrompt(BaseModel):
+    prompt: str
+    n: int = 1  # Number of images to generate
+    size: str = "1024x1024"  # Pixels
+
+image_gen_api_router = APIRouter(tags=["openai_api"])
+
+@image_gen_api_router.post("/generate-image")
+async def generate_image(request: ImagePrompt):
+    """
+    Receives an image generation prompt from the front-end, sends it to OpenAI's API,
+    and returns the generated image(s) to the front-end.
+    """
+    # OpenAI API Settings
+    url = "https://api.openai.com/v1/images/generations"
+    headers = {
+        "Authorization": f"Bearer {os.getenv('OPENAI_API_KEY')}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "prompt": request.prompt,
+        "n": request.n,
+        "size": request.size,
+        "model": "dall-e-3",
+        "quality": "hd"
+    }
+
+    # Make the API request
+    response = requests.post(url, json=payload, headers=headers)
+    
+    # Check for errors
+    if response.status_code != 200:
+        raise HTTPException(status_code=response.status_code, detail=f"API request failed: {response.text}")
+    
+    # Return the response data
+    return response.json()
+
+app.include_router(image_gen_api_router, prefix="/openai_api")
 
 
 #################################################################################
