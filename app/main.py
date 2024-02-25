@@ -13,7 +13,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from openai import OpenAI
+from openai import AsyncOpenAI, OpenAI
 from pydantic import BaseModel
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -54,17 +54,17 @@ class ai_bot:
     # ================= METHODS ===============
 
     # generate post content
-    def generate_post_content(self):
+    async def generate_post_content(self):
         client = self.get_connected_client()
-        result = client.chat.completions.create(
+        result = await client.chat.completions.create(
             model="gpt-3.5-turbo", messages=[{"role": "user", "content": self.textPrompt}]
         )
         return result.choices[0].message.content
 
     # generate post image
-    def generate_post_image(self):
+    async def generate_post_image(self):
         client = self.get_connected_client()
-        response = client.images.generate(
+        response = await client.images.generate(
             model="dall-e-2",
             prompt="a white siamese cat",
             size="256x256",
@@ -76,7 +76,7 @@ class ai_bot:
     # ================= HELPER METHODS ===============
 
     def get_connected_client(self):
-        return OpenAI(api_key=self.api_key)
+        return AsyncOpenAI(api_key=self.api_key)
 
 
 log = get_logger()
@@ -295,7 +295,7 @@ ai_api_router = APIRouter(tags=["ai_api"])
 
 
 @ai_api_router.post("/send_post_request")
-def send_post_request(jsonInput) -> bool:
+async def send_post_request(id: str, mood: str, tone: str, description: str) -> bool:
     """Send a post request to OpenAPI."""
     # input:
     # api_key = None
@@ -303,29 +303,38 @@ def send_post_request(jsonInput) -> bool:
     # tone = None
     # description = None
 
-    with open("core/database/database.json") as f:
-        d = json.load(f)
-        print(d)
+    info = {
+        "caption_mood": mood,
+        "cpation_tone": tone,
+        "caption_description": description,
+        "picture_prompt": description,
+        "picture_size": "256x256",
+        "in_progress": True,
+    }
 
-    userInput = json.loads(jsonInput)
+    database.set_post_request_info(business_id=id, post_request_info=info)
+
+    pprint(database.get_business_info(business_id=id))
+
+    # userInput = json.loads(jsonInput)
 
     our_ai_bot = ai_bot(
         api_key=OPENAI_API_KEY,
-        mood=userInput["mood"],
-        tone=userInput["tone"],
-        description=userInput["description"],
+        mood=mood,
+        tone=tone,
+        description=description,
     )
 
     # send post request
-    generated_content = our_ai_bot.generate_post_content()
-    generated_image = our_ai_bot.generate_post_image()
+    generated_content = await our_ai_bot.generate_post_content()
+    generated_image = await our_ai_bot.generate_post_image()
 
-    print(generated_content)
-    print(generated_image)
+    responses = {"caption_text": generated_content, "picture_url": generated_image}
 
     # add post info to database
-    # respond success
+    database.set_ai_response(business_id=id, ai_response=responses)
 
+    # respond success
     return True
 
 
@@ -336,9 +345,10 @@ def check_post_status() -> bool:
 
 
 @ai_api_router.get("/get_post_data")
-def get_post_data() -> dict:
+def get_post_data(id: str) -> dict:
     """Get the data returened from OpenAPI if ready."""
-    return {}
+    business_info = database.get_business_info(id)
+    return business_info["post_request"]["ai_response"]
 
 
 app.include_router(ai_api_router, prefix="/ai_api")

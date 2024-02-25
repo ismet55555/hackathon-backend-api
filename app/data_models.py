@@ -1,11 +1,11 @@
 """Data Models for FastAPI."""
 
+import json
 from typing import List
 
+from openai import OpenAI
 from pydantic import BaseModel, Field
 
-import json
-from openai import OpenAI
 
 class ai_bot:
 
@@ -16,7 +16,7 @@ class ai_bot:
     tone = None
     description = None
     textPrompt = None
-    imagePrompt=None,
+    imagePrompt = (None,)
 
     # ================= CONSTRUCTORS ===============
 
@@ -36,8 +36,7 @@ class ai_bot:
     def generate_post_content(self):
         client = self.get_connected_client()
         result = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "user", "content": self.textPrompt}]
+            model="gpt-3.5-turbo", messages=[{"role": "user", "content": self.textPrompt}]
         )
         return result.choices[0].message.content
 
@@ -52,12 +51,11 @@ class ai_bot:
             n=1,
         )
         return response.data[0].url
-    
+
     # ================= HELPER METHODS ===============
-    
+
     def get_connected_client(self):
         return OpenAI(api_key=self.api_key)
-
 
 
 class WifiCredentials(BaseModel):

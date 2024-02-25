@@ -1,12 +1,28 @@
 {
     "1": {
-        "name": "blah",
-        "description": "yo",
-        "specifics": "whatsup"
+        "name": "testbus",
+        "description": "des",
+        "specifics": "spec",
+        "email": "email",
+        "password": "pass",
+        "post_request": {
+            "caption_mood": "angry",
+            "cpation_tone": "sad",
+            "caption_description": "bad description",
+            "picture_prompt": "bad description",
+            "picture_size": "256x256",
+            "in_progress": false,
+            "ai_response": {
+                "caption_text": "Feeling frustrated and saddened by the current situation. Let's spread positivity and kindness today \ud83c\udf1f #SpreadKindness #PositivityIsKey",
+                "picture_url": "https://oaidalleapiprodscus.blob.core.windows.net/private/org-frmOwp25dh1E1jerEzbBAD6O/user-t0iUAPKmROcACieVEozrtbQf/img-z8VdJ3bO9MXh8ltDBEW5NrTS.png?st=2024-02-25T02%3A30%3A37Z&se=2024-02-25T04%3A30%3A37Z&sp=r&sv=2021-08-06&sr=b&rscd=inline&rsct=image/png&skoid=6aaadede-4fb3-4698-a8f6-684d7786b067&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2024-02-24T22%3A33%3A22Z&ske=2024-02-25T22%3A33%3A22Z&sks=b&skv=2021-08-06&sig=iSLZ5L2bJ8PRYB1wS9ZBM5k6D3rR%2BpGS661kXBxbR6Q%3D"
+            }
+        }
     },
     "2": {
-        "name": "blah234234",
-        "description": "yo",
-        "specifics": "whatsup"
+        "name": "testbus",
+        "description": "des",
+        "specifics": "spec",
+        "email": "email",
+        "password": "pass"
     }
 }

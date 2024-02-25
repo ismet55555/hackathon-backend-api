@@ -91,17 +91,18 @@ class Database:
         log.info(f"Setting post request info: {business_id} ...")
         self.db = read_json_file(self.db_filepath)
         business_info = self.db.get(business_id, {})
-        business_info["post_request_info"] = post_request_info
+        business_info["post_request"] = post_request_info
         self.db[business_id] = business_info
         overwrite_json_file(self.db_filepath, self.db)
         return business_info
 
-    def set_ai_responses(self, business_id: str, ai_responses: List[str]) -> dict:
+    def set_ai_response(self, business_id: str, ai_response: List[str]) -> dict:
         """TODO."""
         log.info(f"Setting AI responses: {business_id} ...")
         self.db = read_json_file(self.db_filepath)
         business_info = self.db.get(business_id, {})
-        business_info["ai_responses"] = ai_responses
+        business_info["post_request"]["ai_response"] = ai_response
+        business_info["post_request"]["in_progress"] = False
         self.db[business_id] = business_info
         overwrite_json_file(self.db_filepath, self.db)
         return business_info
