@@ -8,7 +8,6 @@ from pydantic import BaseModel, Field
 
 
 class ai_bot:
-
     # ================= ATTRIBUTES ===============
 
     api_key = None

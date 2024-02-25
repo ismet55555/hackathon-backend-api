@@ -1,17 +1,17 @@
 """Class handling twitter stuff."""
 
+import base64
+import os
 from typing import Tuple
 
-import os
-import base64
-
-from requests_oauthlib import OAuth1
 import requests
 from fastapi import HTTPException
+from requests_oauthlib import OAuth1
 
 from app.core.utility.logger_setup import get_logger
 
 log = get_logger()
+
 
 class Twitter:
     """Class handling twitter stuff."""
@@ -43,7 +43,6 @@ class Twitter:
     #         raise HTTPException(status_code=500, detail="Failed to obtain bearer token")
     #
     #     return response.json()["access_token"]
-
 
     def post_tweet(self, tweet_text: str, tweet_image_url: str) -> Tuple[bool, str]:
         """Post a tweet."""
