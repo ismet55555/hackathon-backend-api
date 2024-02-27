@@ -168,3 +168,5 @@ cython_debug/
 **/*.jpeg
 **/*.jpg
 **/*.png
+
+myenv/
