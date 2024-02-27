@@ -166,19 +166,31 @@ async def send_post_request(id: str, mood: str, tone: str, description: str) -> 
         "in_progress": True,
     }
     database.set_post_request_info(business_id=id, post_request_info=info)
+    business_info = database.get_business_info(id)
 
     our_ai_bot = AiBot(
         api_key=OPENAI_API_KEY,
         mood=mood,
         tone=tone,
         description=description,
+        businessInfo=business_info
     )
 
     # send post request
-    generated_content = await our_ai_bot.generate_post_content()
+    # generated_content = await our_ai_bot.generate_post_content()
+    log.info("getting intent")
+    intent = await our_ai_bot.understand_intent()
+    instagramCaptionPrompt = await our_ai_bot.create_prompt_caption()
+    imagePrompt = await our_ai_bot.create_prompt_image()
+
+    log.info(f"Intent: {intent}")
+    log.info(f"Prompt to generate Instagram Caption: {instagramCaptionPrompt}")
+    log.info(f"Prompt to generate Image: {imagePrompt}")
+
+    instagramCaption = await our_ai_bot.create_instagram_caption()
     generated_image = await our_ai_bot.generate_post_image()
 
-    responses = {"caption_text": generated_content, "picture_url": generated_image}
+    responses = {"caption_text": instagramCaption['caption1'], "picture_url": generated_image}
     database.set_ai_response(business_id=id, ai_response=responses)
     return True
 
@@ -193,6 +205,7 @@ def check_post_status() -> bool:
 def get_post_data(id: str) -> dict:
     """Get the data returened from OpenAPI if ready."""
     business_info = database.get_business_info(id)
+    print("businessInfo", business_info["post_request"]["ai_response"])
     return business_info["post_request"]["ai_response"]
 
 
@@ -215,15 +228,17 @@ def post_to_twitter(id: str) -> bool:
     """Post to Twitter/x."""
 
     api_key = os.getenv("TWITTER_API_KEY")
-    api_secret = os.getenv("TWITTER_API_SECRET")
+    api_secret = os.getenv("TWITTER_API_KEY_SECRET")
     access_token = os.getenv("TWITTER_ACCESS_TOKEN")
     access_token_secret = os.getenv("TWITTER_ACCESS_TOKEN_SECRET")
 
     # get image and content from database
     ai_response = database.get_business_info(business_id=id)["post_request"]["ai_response"]
-
     twitter = Twitter(api_key, api_secret, access_token, access_token_secret)
 
+    print(type(ai_response['caption_text']))
+    log.debug(f"Twitter: Posting caption: {ai_response['caption_text']}")
+    log.debug(f"Twitter: Posting picture URL: {ai_response['picture_url']}")
     twitter.post(content=ai_response["caption_text"], image_url=ai_response["picture_url"])
 
     return True
